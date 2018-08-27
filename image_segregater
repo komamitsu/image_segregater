@@ -1,0 +1,65 @@
+#!/usr/bin/env python3
+
+import os
+import shutil
+import sys
+
+import numpy as np
+import cv2
+
+def segregate(src_dir, dst_dir, last_files_num, similarity_rate_threshold, debug):
+    last_files = []
+
+    detected_files_dir = os.path.join(dst_dir, 'detected')
+    os.makedirs(detected_files_dir, exist_ok = True)
+
+    ignored_files_dir = os.path.join(dst_dir, 'ignored')
+    os.makedirs(ignored_files_dir, exist_ok = True)
+
+    files =  os.listdir(src_dir)
+    files.sort()
+
+    for f in files:
+        if not f.endswith('.jpg'):
+            continue
+
+        file_path = os.path.join(src_dir, f)
+        file_img = cv2.imread(file_path)
+
+        is_ignorable = False
+        for last_file in last_files:
+            last_file_path = last_file[0]
+            last_file_img = last_file[1]
+            res = cv2.matchTemplate(file_img, last_file_img, cv2.TM_CCOEFF_NORMED)
+            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+
+            if debug:
+                print("file: {}, last_file: {}, val: {}".format(f, os.path.basename(last_file_path), max_val))
+
+            if max_val >= similarity_rate_threshold:
+                is_ignorable = True
+                break
+
+        last_files.append((file_path, file_img))
+        if len(last_files) > last_files_num:
+            last_files.pop(0)
+
+        if is_ignorable:
+            shutil.copy(file_path, ignored_files_dir)
+        else:
+            shutil.copy(file_path, detected_files_dir)
+
+
+if __name__ == '__main__':
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Senegate images.')
+    parser.add_argument('src_dir', help='source images directory')
+    parser.add_argument('dst_dir', help='destination images directory')
+    parser.add_argument('--last_files_num', help='last files number to be compared', type=int, default=4)
+    parser.add_argument('--similarity_rate_threshold', help='threshold of similarity rate', type=float,default=0.95)
+    parser.add_argument('--debug', action='store_true')
+    args = parser.parse_args()
+
+    segregate(args.src_dir, args.dst_dir, args.last_files_num, args.similarity_rate_threshold, args.debug)
+
