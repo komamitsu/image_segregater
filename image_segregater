@@ -47,8 +47,12 @@ def segregate(src_dir, dst_dir, last_files_num, similarity_rate_threshold, debug
         file_img = cv2.adaptiveThreshold(cv2.imread(file_path), 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
         ret, file_img = cv2.threshold(cv2.imread(file_path), 127, 255, cv2.THRESH_BINARY)
         """
-        file_img = cv2.cvtColor(cv2.imread(file_path), cv2.COLOR_BGR2HSV)
-
+        try:
+            file_img = cv2.cvtColor(cv2.imread(file_path), cv2.COLOR_BGR2HSV)
+        except cv2.error as e:
+            sys.stderr.write("Failed to call cvtColor() for {}: {}\n".format(file_path, e))
+            continue
+ 
         """
         cv2.imshow(f, file_img)
         cv2.waitKey(0)
