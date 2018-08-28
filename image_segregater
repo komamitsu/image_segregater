@@ -19,12 +19,41 @@ def segregate(src_dir, dst_dir, last_files_num, similarity_rate_threshold, debug
     files =  os.listdir(src_dir)
     files.sort()
 
+    """
+    gamma = 2.0
+
+    lookUpTable = np.zeros((256, 1), dtype = 'uint8')
+    for i in range(256):
+            lookUpTable[i][0] = 255 * pow(float(i) / 255, 1.0 / gamma)
+
+    kernel = np.ones((5,5),np.float32)/25
+    """
+
     for f in files:
         if not f.endswith('.jpg'):
             continue
 
         file_path = os.path.join(src_dir, f)
+        """
         file_img = cv2.imread(file_path)
+        file_img = cv2.filter2D(cv2.imread(file_path), -1, kernel)
+        file_img = cv2.blur(cv2.imread(file_path),(3,3))
+        file_img = cv2.medianBlur(cv2.imread(file_path), 5)
+        file_img = cv2.bilateralFilter(cv2.imread(file_path), 9, 75, 75)
+        ret, file_img = cv2.threshold(cv2.imread(file_path), 72, 255, cv2.THRESH_TRUNC)
+        file_img = cv2.LUT(cv2.imread(file_path), lookUpTable)
+        file_img = cv2.LUT(cv2.cvtColor(cv2.imread(file_path), cv2.COLOR_BGR2HSV), lookUpTable)
+        ret, file_img = cv2.threshold(cv2.imread(file_path), 127, 255, cv2.THRESH_TOZERO)
+        file_img = cv2.adaptiveThreshold(cv2.imread(file_path), 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+        ret, file_img = cv2.threshold(cv2.imread(file_path), 127, 255, cv2.THRESH_BINARY)
+        """
+        file_img = cv2.cvtColor(cv2.imread(file_path), cv2.COLOR_BGR2HSV)
+
+        """
+        cv2.imshow(f, file_img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        """
 
         is_ignorable = False
         for last_file in last_files:
@@ -57,7 +86,8 @@ if __name__ == '__main__':
     parser.add_argument('src_dir', help='source images directory')
     parser.add_argument('dst_dir', help='destination images directory')
     parser.add_argument('--last_files_num', help='last files number to be compared', type=int, default=4)
-    parser.add_argument('--similarity_rate_threshold', help='threshold of similarity rate', type=float,default=0.95)
+    # parser.add_argument('--similarity_rate_threshold', help='threshold of similarity rate', type=float,default=0.95)
+    parser.add_argument('--similarity_rate_threshold', help='threshold of similarity rate', type=float,default=0.885)
     parser.add_argument('--debug', action='store_true')
     args = parser.parse_args()
 
